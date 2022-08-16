@@ -1,0 +1,188 @@
+import matplotlib.pyplot as plt
+import numpy as np
+
+class Point:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+    def coord(self):
+        return self.x, self.y
+
+    def draw(self):
+        plt.plot(self.x, self.y, '.')
+        
+        
+t = Point(1, 5)
+t2 = Point(4, 4)
+t3 = Point(7, 3)
+t.draw()
+t2.draw()
+t3.draw()
+
+
+class Shape(Point):
+    def __init__(self, x, y):
+        super().__init__(x, y)
+
+    def is_inside(self, point):
+        return self.x == point.x and self.y == point.y
+
+    def coord(self):
+        return self.x, self.y
+    
+    def draw(self):
+        plt.plot(self.x, self.y, 'x')
+        
+        
+sh = Shape(5, 7)
+sh.draw()
+
+
+class Circle(Shape):
+    def __init__(self, x, y, r):
+        super().__init__(x, y)
+        self.r = r
+        ring = np.linspace(0, 2 * np.pi, 150)
+        self.a = np.array([])
+        self.b = np.array([])
+        for i in range(100):
+            a1 = self.x + self.r * (i / 100) * np.cos(ring)
+            b1 = self.y + self.r * (i / 100) * np.sin(ring)
+            self.a = np.append(self.a, a1)
+            self.b = np.append(self.b, b1)
+
+    def coord(self):
+        return self.a, self.b
+
+    def is_inside(self, point):
+        return ((point.x - self.x) ** 2 + (point.y - self.y) ** 2) ** 0.5 <= self.r
+
+    def draw(self, col):
+        plt.axis('equal')
+        plt.plot(self.x, self.y, '.')
+        a, b = self.coord()
+        plt.plot(a, b, color=str(col))
+        
+        
+c = Circle(8, 4, 3)
+c1 = Circle(10, 10, 1)
+c.draw('#067bc2')
+c1.draw('#84BCDA')
+t2.draw()
+t3.draw()
+print(c.is_inside(t2))
+print(c.is_inside(t3))
+
+
+class Square(Shape):
+    def __init__(self, x, y, s):
+        super().__init__(x, y)
+        self.s = s
+        self.a = np.array([])
+        self.b = np.array([])
+        c = np.linspace((self.y - self.s/2), (self.y - self.s/2) + self.s, self.s*100)
+        for i in c:
+            a1 = np.linspace((self.x - self.s/2), (self.x - self.s/2) + self.s, self.s*100)
+            b1 = np.full((1, len(a1)), i)
+            self.a = np.append(self.a, a1)
+            self.b = np.append(self.b, b1)
+
+    def is_inside(self, point):
+        return (point.x <= self.x + self.s/2) and (point.x >= self.x - + self.s/2) and (point.y <= self.y + self.s/2) and (point.y >= self.y - self.s/2)
+
+    def coord(self):
+        return self.a, self.b
+    
+    def draw(self, col):
+        plt.axis('equal')
+        plt.plot(self.x, self.y, '.')
+        a, b = self.coord()
+        plt.plot(a, b, color=str(col))
+        
+        
+s = Square(5, 5, 6)
+s2 = Square(2, 8, 3)
+s.draw('#F37748')
+s2.draw('#D56062')
+t.draw()
+t2.draw()
+t3.draw()
+print(s.is_inside(t))
+print(s.is_inside(t2))
+print(s.is_inside(t3))
+
+
+class Union(Shape):
+    def __init__(self, figures):
+        self.figures = figures
+        self.a = np.array([])
+        self.b = np.array([])
+        for figure in self.figures:
+            a1, b1 = figure.coord()
+            self.a = np.append(self.a, a1)
+            self.b = np.append(self.b, b1)
+
+    def is_inside(self, point):
+        is_inside = False
+        for figure in self.figures:
+            is_inside = is_inside or figure.is_inside(point)
+        return is_inside
+
+    def coord(self):
+        return self.a, self.b
+    
+    def draw(self):
+        for figure in self.figures:
+            figure.draw('#F09D2A')
+            
+            
+un = Union((c, c1, s, s2))
+un.draw()
+t.draw()
+t2.draw()
+t3.draw()
+print(un.is_inside(t))
+print(un.is_inside(t2))
+print(un.is_inside(t3))
+
+
+class Intersection(Shape):
+    def __init__(self, figures):
+        self.figures = figures
+        self.a = np.array([])
+        self.b = np.array([])
+        a1 = np.array([])
+        b1 = np.array([])
+        for figure in self.figures:
+            a2, b2 = figure.coord()
+            a1 = np.append(a1, a2)
+            b1 = np.append(b1, b2)
+
+        for i in range(len(a1)):
+            temp = Point(a1[i], b1[i])
+            if all(figure.is_inside(temp) for figure in self.figures):
+                self.a = np.append(self.a, a1[i])
+                self.b = np.append(self.b, b1[i])
+
+    def is_inside(self, point):
+        is_inside = True
+        for figure in self.figures:
+            is_inside = is_inside and figure.is_inside(point)
+        return is_inside
+    
+    def coord(self):
+        return self.a, self.b
+    
+    def draw(self):
+        plt.axis('equal')
+        a, b = self.coord()
+        plt.plot(a, b, color='#F09D2A')
+        
+        
+inter = Intersection((c, s))
+inter.draw()
+t2.draw()
+t3.draw()
+print(inter.is_inside(t2))
+print(inter.is_inside(t3))
